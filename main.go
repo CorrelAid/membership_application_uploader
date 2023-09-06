@@ -13,36 +13,30 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CorrelAid/membership_application_uploader/inits"
 	"github.com/CorrelAid/membership_application_uploader/models"
 	"github.com/CorrelAid/membership_application_uploader/validators"
 	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/go-memdb"
-	"github.com/joho/godotenv"
 )
 
 var DB *memdb.MemDB
 
 func main() {
-
-	ginMode := os.Getenv("GIN_MODE")
-	if ginMode != "release" {
-		err := godotenv.Load(".env")
-		if err != nil {
-			log.Fatalf("Error loading .env file: %s", err.Error())
-		}
-	}
-
-	DB = inits.DBInit()
-
 	router := gin.Default()
-	// Set a lower memory limit for multipart forms (default is 32 MiB)
-	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	router.ForwardedByClientIP = true
 	router.SetTrustedProxies(nil)
 	router.POST("/", uploadPDF)
-	router.Run(":8080")
 
+	// Listen on the correct port
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default to port 8080 if PORT environment variable is not set
+	}
+
+	err := router.Run(":" + port)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // uploadPDF handles the upload of a PDF file.
