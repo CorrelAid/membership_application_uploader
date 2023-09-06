@@ -24,12 +24,16 @@ import (
 var DB *memdb.MemDB
 
 func main() {
-	err := godotenv.Load(".env")
-	DB = inits.DBInit()
 
-	if err != nil {
-		log.Fatalf("Error loading .env file")
+	ginMode := os.Getenv("GIN_MODE")
+	if ginMode != "release" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatalf("Error loading .env file: %s", err.Error())
+		}
 	}
+
+	DB = inits.DBInit()
 
 	router := gin.Default()
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
@@ -41,6 +45,17 @@ func main() {
 
 }
 
+// uploadPDF handles the upload of a PDF file.
+//
+// It expects a "file" parameter in the form data of the request.
+//
+// Returns an HTTP 400 error if the file parameter is missing or if there is an error getting the file.
+// Returns an HTTP 500 error if there is an error opening the file or reading its contents.
+// Returns an HTTP 400 error if the form data fails validation.
+// Returns an HTTP 500 error if there is an error querying the database.
+// Returns an HTTP 400 error if the email already exists in the database.
+// Returns an HTTP 500 error if there is an error uploading the file to Nextcloud.
+// Returns an HTTP 200 status if the file is uploaded successfully.
 func uploadPDF(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -97,6 +112,12 @@ func uploadPDF(c *gin.Context) {
 	c.String(http.StatusOK, "File uploaded successfully")
 }
 
+// uploadFileToNextcloud uploads a file to the Nextcloud server.
+//
+// It takes in a formData object of type models.FormData, which contains the data
+// of the file to be uploaded, and a currentTime string representing the current time.
+//
+// The function returns an error if there is any issue during the upload process.
 func uploadFileToNextcloud(formData models.FormData, currentTime string) error {
 	client := &http.Client{}
 
