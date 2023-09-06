@@ -40,7 +40,7 @@ func main() {
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	router.ForwardedByClientIP = true
 	router.SetTrustedProxies([]string{"127.0.0.1", "hammerhead-app-9tc9q.ondigitalocean.app"})
-	router.POST("/upload", uploadPDF)
+	router.POST("/", uploadPDF)
 	router.Run(":8080")
 
 }
