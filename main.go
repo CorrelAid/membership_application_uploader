@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,29 +10,31 @@ import (
 	"strings"
 	"time"
 
+	"github.com/CorrelAid/membership_application_uploader/inits"
+	"github.com/CorrelAid/membership_application_uploader/models"
+	"github.com/CorrelAid/membership_application_uploader/validators"
 	"github.com/gin-gonic/gin"
+	"github.com/hashicorp/go-memdb"
 	"github.com/joho/godotenv"
 )
 
-type FormData struct {
-	File  []byte
-	Name  string
-	Email string
-}
+var DB *memdb.MemDB
 
 func main() {
 	err := godotenv.Load(".env")
+	DB = inits.DBInit()
+
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
+
 	router := gin.Default()
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	router.POST("/upload", uploadPDF)
 	router.Run(":8080")
-}
 
-const MaxFileSize = 3 * 1024 * 1024 // 3 MB
+}
 
 func uploadPDF(c *gin.Context) {
 	file, err := c.FormFile("file")
@@ -48,33 +49,53 @@ func uploadPDF(c *gin.Context) {
 		return
 	}
 	defer src.Close()
+
 	data, err := io.ReadAll(src)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
 		return
 	}
-	formData := FormData{
+
+	formData := models.FormData{
 		File:  data,
 		Name:  c.PostForm("name"),
 		Email: c.PostForm("email"),
 	}
 
-	if err := validateFormData(formData); err != nil {
+	if err := validators.ValidateFormData(formData); err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	currentTime := time.Now()
+
+	currentTime := time.Now().Format(time.RFC1123)
+
+	// Lookup by email
+	txn := DB.Txn(false)
+	defer txn.Abort()
+
+	raw, err := txn.First("member", "id", formData.Email)
+	if err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
+		return
+	}
+
+	if raw != nil {
+		c.String(http.StatusBadRequest, "Email already exists")
+		return
+	}
+
 	if err := uploadFileToNextcloud(formData, currentTime); err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
 		return
 	}
+
 	c.String(http.StatusOK, "File uploaded successfully")
 }
 
-func uploadFileToNextcloud(formData FormData, currentTime time.Time) error {
+func uploadFileToNextcloud(formData models.FormData, currentTime string) error {
 	client := &http.Client{}
 
-	filename := fmt.Sprintf("%s_%s", processName(formData.Name), currentTime.Format("2006-01-02"))
+	filename := fmt.Sprintf("%s_%s", processName(formData.Name), currentTime)
 
 	req, err := http.NewRequest(http.MethodPut, "https://cloud.correlaid.org/remote.php/dav/files/bot@correlaid.org/Mitgliedsanträge/"+filename+".pdf", bytes.NewReader(formData.File))
 	if err != nil {
@@ -100,29 +121,27 @@ func uploadFileToNextcloud(formData FormData, currentTime time.Time) error {
 	if err != nil {
 		return err
 	}
+	insertMember(formData, currentTime)
 	return nil
 }
-
-func validateFormData(formData FormData) error {
-	if formData.File == nil {
-		return errors.New("file field is required")
+func insertMember(formData models.FormData, currentTime string) error {
+	newMember := &models.Member{
+		Email:  formData.Email,
+		Name:   formData.Name,
+		Time:   currentTime,
+		Expiry: time.Now().Add(24 * 14 * time.Hour).Format(time.RFC1123),
 	}
 
-	if formData.Name == "" || formData.Email == "" {
-		return errors.New("name and Email fields are required")
-	}
+	txn := DB.Txn(true)
+	defer txn.Abort()
 
-	if err := validateFile(formData.File); err != nil {
+	if err := txn.Insert("member", newMember); err != nil {
 		return err
 	}
 
-	return nil
-}
+	txn.Commit()
 
-func validateFile(file []byte) error {
-	if len(file) > MaxFileSize {
-		return errors.New("file size exceeds the maximum limit")
-	}
+	log.Printf("Inserted member: email=%s", newMember.Email)
 
 	return nil
 }
