@@ -41,7 +41,7 @@ func main() {
 	router.ForwardedByClientIP = true
 	router.SetTrustedProxies([]string{"127.0.0.1", "correlaid.org"})
 	router.POST("/upload", uploadPDF)
-	router.Run(":8080")
+	router.Run(":8000")
 
 }
 
