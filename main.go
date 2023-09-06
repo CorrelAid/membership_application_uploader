@@ -19,6 +19,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -35,8 +36,19 @@ func main() {
 
 	router := gin.Default()
 
-	// allowedDomains := []string{"example.com", "localhost:8080"}
-	// router.Use(middleware.DomainWhitelistMiddleware(allowedDomains))
+	rateLimiter := rate.NewLimiter(rate.Every(time.Minute), 2)
+
+	// Configure IP-based rate limiting middleware
+	router.Use(func(c *gin.Context) {
+		if !rateLimiter.Allow() {
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"message": "Too many requests. Please try again later.",
+			})
+			c.Abort()
+			return
+		}
+		c.Next()
+	})
 
 	// Configure CORS middleware
 	config := cors.DefaultConfig()
