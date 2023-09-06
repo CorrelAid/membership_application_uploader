@@ -28,14 +28,14 @@ POST /upload: Handles the upload of a PDF file for a membership application.
 ## Test 
 1. Existing email
 ```bash
-curl -X POST http://localhost:8080/upload \
+curl -X POST http://localhost:8080 \
   -F "file=@foo.pdf" \
   -H "Content-Type: multipart/form-data" -F "name=Test Name" -F "email=test@example.com"
 
 ```
 2. New email
 ```bash
-curl -X POST http://localhost:8080/upload \
+curl -X POST http://localhost:8080 \
   -F "file=@foo.pdf" \
   -H "Content-Type: multipart/form-data" -F "name=Test Name" -F "email=test2@example.com"
 
