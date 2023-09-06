@@ -16,6 +16,7 @@ import (
 	"github.com/CorrelAid/membership_application_uploader/inits"
 	"github.com/CorrelAid/membership_application_uploader/models"
 	"github.com/CorrelAid/membership_application_uploader/validators"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -33,6 +34,16 @@ func main() {
 	inits.DBInit()
 
 	router := gin.Default()
+
+	// allowedDomains := []string{"example.com", "localhost:8080"}
+	// router.Use(middleware.DomainWhitelistMiddleware(allowedDomains))
+
+	// Configure CORS middleware
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://correlaid.org", "http://localhost"}
+	config.AllowMethods = []string{"POST"}
+	router.Use(cors.New(config))
+
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	router.ForwardedByClientIP = true
