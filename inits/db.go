@@ -8,7 +8,9 @@ import (
 	"github.com/hashicorp/go-memdb"
 )
 
-func DBInit() *memdb.MemDB {
+var DB *memdb.MemDB
+
+func DBInit() {
 
 	schema := &memdb.DBSchema{
 		Tables: map[string]*memdb.TableSchema{
@@ -63,6 +65,5 @@ func DBInit() *memdb.MemDB {
 	}
 	txn.Commit()
 	go routines.StartCleanupRoutine(db)
-	return db
-
+	DB = db
 }
