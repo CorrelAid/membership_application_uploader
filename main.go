@@ -39,9 +39,9 @@ func main() {
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	router.ForwardedByClientIP = true
-	router.SetTrustedProxies([]string{"127.0.0.1", "correlaid.org"})
+	router.SetTrustedProxies([]string{"127.0.0.1", "hammerhead-app-9tc9q.ondigitalocean.app"})
 	router.POST("/upload", uploadPDF)
-	router.Run(":8000")
+	router.Run(":8080")
 
 }
 
