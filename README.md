@@ -2,7 +2,7 @@
 This Go application handles the upload of CorrelAid membership applications to a Nextcloud instance. 
 
 ## Description of Functionality
-When the application starts, it initializes configurations and environment variables, and establishes a connection to an in-memory database. The application creates a Gin router and applies middleware for rate limiting (token bucket algorithm) and CORS. When a POST request is made to the server, the application's route handler is invoked. In the route handler, it 
+When the application starts, it initializes configurations and environment variables, and establishes a connection to an in-memory database. The application creates a Gin router and applies middleware for rate limiting per IP and CORS. When a POST request is made to the server, the application's route handler is invoked. In the route handler, it 
 - first validates a token and client IP address using the **Turnstile** verify endpoint. 
 - Next, the application validates and processes the form data, including checking the file size and syntax checking the email. It performs a database lookup to check if the email already exists.
 - Afterwards, the application uploads the file to a Nextcloud server using WebDAV. It inserts the email in the database to be able to check for duplicate emails in the future.
