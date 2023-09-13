@@ -5,7 +5,12 @@ import (
 	"io"
 	"mime/multipart"
 
+	emailverifier "github.com/AfterShip/email-verifier"
 	"github.com/CorrelAid/membership_application_uploader/models"
+)
+
+var (
+	verifier = emailverifier.NewVerifier()
 )
 
 func ValidateProcessFormData(formData models.FormData, max_size int) (models.ProcessedFormData, error) {
@@ -16,6 +21,15 @@ func ValidateProcessFormData(formData models.FormData, max_size int) (models.Pro
 	if formData.Name == "" || formData.Email == "" {
 		return models.ProcessedFormData{}, errors.New("name and Email fields are required")
 	}
+
+	ret, err := verifier.Verify(formData.Email)
+	if err != nil {
+		return models.ProcessedFormData{}, err
+	}
+	if !ret.Syntax.Valid {
+		return models.ProcessedFormData{}, errors.New("email address syntax is invalid")
+	}
+
 	data, err := validateProcessFile(formData.File, max_size)
 
 	if err != nil {
