@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,6 +23,8 @@ import (
 	"golang.org/x/time/rate"
 )
 
+var MaxSize int
+
 func main() {
 
 	ginMode := os.Getenv("GIN_MODE")
@@ -31,6 +34,15 @@ func main() {
 			log.Fatalf("Error loading .env file: %s", err.Error())
 		}
 	}
+	maxSizeStr := os.Getenv("MAX_FILE_SIZE")
+	if maxSizeStr == "" {
+		panic("Missing MAX_FILE_SIZE")
+	}
+	maxSize, err := strconv.Atoi(maxSizeStr)
+	if err != nil {
+		panic("error converting max file size to int")
+	}
+	MaxSize = maxSize
 
 	inits.DBInit()
 
@@ -67,7 +79,7 @@ func main() {
 		port = "8080" // Default to port 8080 if PORT environment variable is not set
 	}
 
-	err := router.Run(":" + port)
+	err = router.Run(":" + port)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -96,7 +108,7 @@ func handle(c *gin.Context) {
 		Email: c.PostForm("email"),
 	}
 
-	processedFormData, err := validators.ValidateProcessFormData(formData)
+	processedFormData, err := validators.ValidateProcessFormData(formData, MaxSize)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
