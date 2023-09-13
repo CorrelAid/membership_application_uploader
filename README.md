@@ -18,6 +18,7 @@ When the application starts, it initializes configurations and environment varia
   TURNSTILE_SECRET_KEY=secret
   TEST_TOKEN=tst
   MAX_FILE_SIZE=3145728 #3mb
+  MAX_REQUESTS_PER_MINUTE=5
   ```
 4. Run the application using go run main.go.
 
