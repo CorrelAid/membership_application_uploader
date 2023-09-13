@@ -11,7 +11,6 @@ import (
 func InsertMember(processedFormData models.ProcessedFormData, currentTime string) error {
 	newMember := &models.Member{
 		Email:  processedFormData.Email,
-		Name:   processedFormData.Name,
 		Time:   currentTime,
 		Expiry: time.Now().Add(24 * 14 * time.Hour).Format(time.RFC1123),
 	}

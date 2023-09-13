@@ -23,12 +23,6 @@ func DBInit() {
 						Indexer:      &memdb.StringFieldIndex{Field: "Email"},
 						AllowMissing: false,
 					},
-					"name": {
-						Name:         "name",
-						Unique:       false,
-						Indexer:      &memdb.StringFieldIndex{Field: "Name"},
-						AllowMissing: false,
-					},
 					"time": {
 						Name:         "time",
 						Unique:       false,
@@ -52,7 +46,6 @@ func DBInit() {
 	}
 	member := &models.Member{
 		Email:  "test@example.com",
-		Name:   "Schmaxi Schmuster",
 		Time:   "2022-12-31",
 		Expiry: time.Now().Add(24 * 14 * time.Hour).Format(time.RFC1123),
 	}

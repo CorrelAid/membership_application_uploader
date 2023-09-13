@@ -1,28 +1,24 @@
 # Membership Application Uploader
-This Go application handles the upload of PDF files for membership applications. It provides an HTTP endpoint for uploading files and storing the application details in a database. The uploaded files are also sent to a Nextcloud server for storage.
+This Go application handles the upload of membership applications to a Nextcloud instance. 
 
-## Prerequisites
-Go (version 1.16 or higher)
-github.com/joho/godotenv package (go get github.com/joho/godotenv)
-github.com/gin-gonic/gin package (go get github.com/gin-gonic/gin)
-github.com/hashicorp/go-memdb package (go get github.com/hashicorp/go-memdb)
+## Description of Functionality
+When the application starts, it initializes configurations and environment variables, and establishes a connection to an in-memory database. The application creates a Gin router and applies middleware for rate limiting (token bucket algorithm) and CORS. When a POST request is made to the server, the application's route handler is invoked. In the route handler, it 
+- first validates a token and client IP address using the **Turnstile** verify endpoint. 
+- Next, the application validates and processes the form data, including checking the file size and syntax checking the email. It performs a database lookup to check if the email already exists.
+- Afterwards, the application uploads the file to a Nextcloud server using WebDAV. It inserts the email the database to be able to check for duplicate emails in the future.
 
 ## Development
 1. Clone the repository.
 2. Install the required packages using go get.
-3. Set the necessary environment variable NEXTCLOUD_PW
+3. Set the necessary environment variables. Create a .env file that looks like this:
+  ```bash
+  NEXTCLOUD_PW=pw
+  NEXTCLOUD_USER=user
+  TURNSTILE_SECRET_KEY=secret
+  TEST_TOKEN=tst
+  MAX_FILE_SIZE=3145728 #3mb
+  ```
 4. Run the application using go run main.go.
-
-## API Endpoint
-POST /upload: Handles the upload of a PDF file for a membership application.
-
-## Functionality
-- Retrieves the uploaded file from the request.
-- Validates the form data.
-- Checks if the email already exists in-memory database.
-- Uploads the file to the Nextcloud server.
-- Inserts the member details into the in-memory database.
-- Runs a background routine that cleans up expired data entries
 
 
 ## Test 
@@ -38,6 +34,4 @@ curl -X POST http://localhost:8080 \
 curl -X POST http://localhost:8080 \
   -F "file=@foo.pdf" \
   -H "Content-Type: multipart/form-data" -F "name=Test Name" -F "email=test2@example.com" -F "token=<your_test_token>"
-
-
 ```
