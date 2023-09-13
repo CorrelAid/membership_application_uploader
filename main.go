@@ -39,7 +39,7 @@ func parseEnvInt(key string) (int, error) {
 	return value, nil
 }
 
-func parseEnvFloat32(key string) (float32, error) {
+func parseEnvFloat64(key string) (float64, error) {
 	valueStr := os.Getenv(key)
 	if valueStr == "" {
 		return 0, fmt.Errorf("missing %s", key)
@@ -48,7 +48,7 @@ func parseEnvFloat32(key string) (float32, error) {
 	if err != nil {
 		return 0, fmt.Errorf("error converting %s to float32", key)
 	}
-	return float32(value64), nil
+	return value64, nil
 }
 
 func main() {
@@ -73,7 +73,7 @@ func main() {
 	}
 	WebDavURL = webDavURL
 
-	MaxRequests, err := parseEnvFloat32("MAX_REQUESTS_PER_MINUTE")
+	MaxRequests, err := parseEnvFloat64("MAX_REQUESTS_PER_MINUTE")
 	if err != nil {
 		panic(err)
 	}

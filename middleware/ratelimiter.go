@@ -2,26 +2,28 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/didip/tollbooth"
+	"github.com/didip/tollbooth/limiter"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/time/rate"
 )
 
-func RateLimitMiddleware(maxRequests float32) gin.HandlerFunc {
+func RateLimitMiddleware(maxRequests float64) gin.HandlerFunc {
 	per_second := maxRequests / 60.0
-	limiter := rate.NewLimiter(rate.Limit(per_second), 1)
+	limiter := tollbooth.NewLimiter(per_second, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Minute})
+
+	limiter.SetIPLookups([]string{"RemoteAddr", "X-Forwarded-For", "X-Real-IP"})
+
 	return func(c *gin.Context) {
-		if !limiter.Allow() {
-			message := Message{
+		httpError := tollbooth.LimitByRequest(limiter, c.Writer, c.Request)
+		if httpError != nil {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, Message{
 				Status: "Request Failed",
 				Body:   "The API is at capacity, try again later.",
-			}
-
-			c.JSON(http.StatusTooManyRequests, message)
-			c.Abort()
+			})
 			return
 		}
-
 		c.Next()
 	}
 }
