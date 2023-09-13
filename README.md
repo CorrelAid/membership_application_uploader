@@ -26,17 +26,18 @@ POST /upload: Handles the upload of a PDF file for a membership application.
 
 
 ## Test 
-1. Existing email
+1. Existing email without token
 ```bash
 curl -X POST http://localhost:8080 \
   -F "file=@foo.pdf" \
-  -H "Content-Type: multipart/form-data" -F "name=Test Name" -F "email=test@example.com"
+  -H "Content-Type: multipart/form-data" -F "name=Test Name" -F "email=test@example.com" -F "token=<your_test_token>"
 
 ```
-2. New email
+2. New email without token 
 ```bash
 curl -X POST http://localhost:8080 \
   -F "file=@foo.pdf" \
-  -H "Content-Type: multipart/form-data" -F "name=Test Name" -F "email=test2@example.com"
+  -H "Content-Type: multipart/form-data" -F "name=Test Name" -F "email=test2@example.com" -F "token=<your_test_token>"
+
 
 ```
