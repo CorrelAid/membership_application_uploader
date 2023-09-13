@@ -25,6 +25,7 @@ import (
 )
 
 var MaxSize int
+var WebDavURL string
 
 func main() {
 
@@ -44,6 +45,12 @@ func main() {
 		panic("error converting max file size to int")
 	}
 	MaxSize = maxSize
+
+	webdavurl := os.Getenv("WEBDAV_URL")
+	if webdavurl == "" {
+		panic("Missing WEBDAV_URL")
+	}
+	WebDavURL = webdavurl
 
 	inits.DBInit()
 
@@ -137,7 +144,7 @@ func uploadFileToNextcloud(processedFormData models.ProcessedFormData, currentTi
 
 	filename := fmt.Sprintf("%s_%s", result, currentTime)
 
-	req, err := http.NewRequest(http.MethodPut, "https://cloud.correlaid.org/remote.php/dav/files/bot@correlaid.org/Mitgliedsanträge/"+filename+".pdf", bytes.NewReader(processedFormData.FileContent))
+	req, err := http.NewRequest(http.MethodPut, WebDavURL+"/"+filename+".pdf", bytes.NewReader(processedFormData.FileContent))
 	if err != nil {
 		return err
 	}
