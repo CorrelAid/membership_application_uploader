@@ -27,37 +27,63 @@ import (
 var MaxSize int
 var WebDavURL string
 
-func main() {
+func parseEnvInt(key string) (int, error) {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return 0, fmt.Errorf("missing %s", key)
+	}
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return 0, fmt.Errorf("error converting %s to int", key)
+	}
+	return value, nil
+}
 
+func parseEnvFloat32(key string) (float32, error) {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return 0, fmt.Errorf("missing %s", key)
+	}
+	value64, err := strconv.ParseFloat(valueStr, 32)
+	if err != nil {
+		return 0, fmt.Errorf("error converting %s to float32", key)
+	}
+	return float32(value64), nil
+}
+
+func main() {
 	ginMode := os.Getenv("GIN_MODE")
 	if ginMode != "release" {
 		err := godotenv.Load(".env")
 		if err != nil {
-			log.Fatalf("Error loading .env file: %s", err.Error())
+			log.Fatalf("error loading .env file: %s", err.Error())
 		}
 	}
-	maxSizeStr := os.Getenv("MAX_FILE_SIZE")
-	if maxSizeStr == "" {
-		panic("Missing MAX_FILE_SIZE")
-	}
-	maxSize, err := strconv.Atoi(maxSizeStr)
+
+	maxSize, err := parseEnvInt("MAX_FILE_SIZE")
 	if err != nil {
-		panic("error converting max file size to int")
+		panic(err)
 	}
+
 	MaxSize = maxSize
 
-	webdavurl := os.Getenv("WEBDAV_URL")
-	if webdavurl == "" {
+	webDavURL := os.Getenv("WEBDAV_URL")
+	if webDavURL == "" {
 		panic("Missing WEBDAV_URL")
 	}
-	WebDavURL = webdavurl
+	WebDavURL = webDavURL
+
+	MaxRequests, err := parseEnvFloat32("MAX_REQUESTS_PER_MINUTE")
+	if err != nil {
+		panic(err)
+	}
 
 	inits.DBInit()
 
 	router := gin.Default()
 
 	// Rate Limiting
-	router.Use(middleware.RateLimitMiddleware())
+	router.Use(middleware.RateLimitMiddleware(MaxRequests))
 
 	// CORS
 	config := cors.DefaultConfig()
@@ -111,7 +137,7 @@ func handle(c *gin.Context) {
 		return
 	}
 
-	currentTime := time.Now().Format(time.RFC1123)
+	currentTime := time.Now().Format("2006-01-02_15-04-05")
 
 	// Lookup by email
 	txn := inits.DB.Txn(false)
@@ -143,6 +169,8 @@ func uploadFileToNextcloud(processedFormData models.ProcessedFormData, currentTi
 	result := strings.ReplaceAll(lowercase, " ", "_")
 
 	filename := fmt.Sprintf("%s_%s", result, currentTime)
+
+	fmt.Println(filename)
 
 	req, err := http.NewRequest(http.MethodPut, WebDavURL+"/"+filename+".pdf", bytes.NewReader(processedFormData.FileContent))
 	if err != nil {

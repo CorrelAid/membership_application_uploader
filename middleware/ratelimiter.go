@@ -7,8 +7,9 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func RateLimitMiddleware() gin.HandlerFunc {
-	limiter := rate.NewLimiter(2, 4)
+func RateLimitMiddleware(maxRequests float32) gin.HandlerFunc {
+	per_second := maxRequests / 60.0
+	limiter := rate.NewLimiter(rate.Limit(per_second), 1)
 	return func(c *gin.Context) {
 		if !limiter.Allow() {
 			message := Message{
