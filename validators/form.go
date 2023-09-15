@@ -1,12 +1,14 @@
 package validators
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"mime/multipart"
 
 	emailverifier "github.com/AfterShip/email-verifier"
 	"github.com/CorrelAid/membership_application_uploader/models"
+	"github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
 var (
@@ -43,10 +45,13 @@ func ValidateProcessFormData(formData models.FormData, max_size int) (models.Pro
 	return processedFormData, nil
 }
 func validateProcessFile(file *multipart.FileHeader, max_size int) ([]byte, error) {
-	// Check if file size exceeds the maximum limit
 
 	if file.Size > int64(max_size) {
 		return nil, errors.New("file size exceeds the maximum limit")
+	}
+
+	if file.Header.Get("Content-Type") != "application/pdf" {
+		return nil, errors.New("file is not a PDF")
 	}
 
 	src, err := file.Open()
@@ -58,6 +63,11 @@ func validateProcessFile(file *multipart.FileHeader, max_size int) ([]byte, erro
 	data, err := io.ReadAll(src)
 	if err != nil {
 		return nil, err
+	}
+
+	err = api.Validate(bytes.NewReader(data), nil)
+	if err != nil {
+		return nil, errors.New("PDF validation failed")
 	}
 
 	return data, nil

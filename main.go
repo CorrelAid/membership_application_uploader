@@ -27,30 +27,6 @@ import (
 var MaxSize int
 var WebDavURL string
 
-func parseEnvInt(key string) (int, error) {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return 0, fmt.Errorf("missing %s", key)
-	}
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		return 0, fmt.Errorf("error converting %s to int", key)
-	}
-	return value, nil
-}
-
-func parseEnvFloat64(key string) (float64, error) {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return 0, fmt.Errorf("missing %s", key)
-	}
-	value64, err := strconv.ParseFloat(valueStr, 32)
-	if err != nil {
-		return 0, fmt.Errorf("error converting %s to float32", key)
-	}
-	return value64, nil
-}
-
 func main() {
 	ginMode := os.Getenv("GIN_MODE")
 	if ginMode != "release" {
@@ -199,4 +175,28 @@ func uploadFileToNextcloud(processedFormData models.ProcessedFormData, currentTi
 	}
 	operations.InsertMember(processedFormData, currentTime)
 	return nil
+}
+
+func parseEnvInt(key string) (int, error) {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return 0, fmt.Errorf("missing %s", key)
+	}
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return 0, fmt.Errorf("error converting %s to int", key)
+	}
+	return value, nil
+}
+
+func parseEnvFloat64(key string) (float64, error) {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return 0, fmt.Errorf("missing %s", key)
+	}
+	value64, err := strconv.ParseFloat(valueStr, 32)
+	if err != nil {
+		return 0, fmt.Errorf("error converting %s to float32", key)
+	}
+	return value64, nil
 }
