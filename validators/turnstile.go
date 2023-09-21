@@ -3,6 +3,7 @@ package validators
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -17,8 +18,10 @@ func ValidateTurnstileToken(c *gin.Context, token string, ip string) error {
 		if token == os.Getenv("TEST_TOKEN") {
 			return nil
 		}
-		return nil
 	}
+
+	// print token
+	fmt.Println(token)
 
 	secret := os.Getenv("TURNSTILE_SECRET_KEY")
 
