@@ -20,8 +20,8 @@ func ValidateProcessFormData(formData models.FormData, max_size int) (models.Pro
 		return models.ProcessedFormData{}, errors.New("file field is required")
 	}
 
-	if formData.Name == "" || formData.Email == "" {
-		return models.ProcessedFormData{}, errors.New("name and Email fields are required")
+	if formData.Email == "" {
+		return models.ProcessedFormData{}, errors.New("email field is required")
 	}
 
 	ret, err := verifier.Verify(formData.Email)

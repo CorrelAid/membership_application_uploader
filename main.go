@@ -58,14 +58,14 @@ func main() {
 
 	router := gin.Default()
 
-	// Rate Limiting
-	router.Use(middleware.RateLimitMiddleware(MaxRequests))
-
 	// CORS
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://correlaid.org", "http://localhost"}
+	config.AllowOrigins = []string{"http://localhost:5173", "https://correlaid.org"}
 	config.AllowMethods = []string{"POST"}
 	router.Use(cors.New(config))
+
+	// Rate Limiting
+	router.Use(middleware.RateLimitMiddleware(MaxRequests))
 
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	router.MaxMultipartMemory = 3 << 20 // 3 MiB
