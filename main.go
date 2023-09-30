@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -91,9 +92,20 @@ func handle(c *gin.Context) {
 
 	err := validators.ValidateTurnstileToken(c, c.PostForm("token"), ip)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Error validating token: "+err.Error())
+		// if error is internal server error
+		if err == errors.New("internal_server_error") {
+			c.String(http.StatusInternalServerError, "Error validating token: "+err.Error())
+		}
+		// if error is token not valid
+		if err == errors.New("token_not_valid") {
+			c.String(http.StatusBadRequest, "Error validating token: "+err.Error())
+		}
+
 		return
 	}
+
+	// Print sucess of validating
+	fmt.Println("Validation successful")
 
 	formFile, err := c.FormFile("file")
 	if err != nil {

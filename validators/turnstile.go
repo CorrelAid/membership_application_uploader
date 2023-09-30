@@ -3,7 +3,7 @@ package validators
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -12,16 +12,15 @@ import (
 
 func ValidateTurnstileToken(c *gin.Context, token string, ip string) error {
 	if token == "" {
+		log.Println("Token is required")
 		return errors.New("token is required")
 	}
 	if os.Getenv("GIN_MODE") != "release" {
 		if token == os.Getenv("TEST_TOKEN") {
+			log.Println("Test token used")
 			return nil
 		}
 	}
-
-	// print token
-	fmt.Println(token)
 
 	secret := os.Getenv("TURNSTILE_SECRET_KEY")
 
@@ -30,11 +29,17 @@ func ValidateTurnstileToken(c *gin.Context, token string, ip string) error {
 		Secret: secret,
 	})
 	ok, err := srv.Verify(ctx, token, ip)
+
 	if err != nil {
-		return err
+		// print error
+		log.Println("Verification error:", err)
+		// return internal server error and status code 500
+		return errors.New("internal_server_error")
+
 	}
 	if !ok {
-		return errors.New("token not valid")
+		log.Println("Token not valid")
+		return errors.New("token_not_valid")
 	}
 	return nil
 }
